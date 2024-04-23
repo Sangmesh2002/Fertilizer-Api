@@ -1,16 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from sklearn.tree import DecisionTreeClassifier
-import joblib
-import numpy as np
+import pickle
 
-# Define FastAPI app
 app = FastAPI()
 
-# Load the trained model
-classifier = joblib.load("Fertclassifier-Model.pkl")
+# Load the classifier model from the pickle file
+with open("Fertclassifier-Model.pkl", "rb") as f:
+    classifier = pickle.load(f)
 
-# Define input data schema using Pydantic BaseModel
 class InputData(BaseModel):
     Temparature: float
     Humidity: float
@@ -23,11 +20,10 @@ class InputData(BaseModel):
 
 @app.post("/recommend_fertilizer/")
 def recommendation(data: InputData):
-    features = np.array([[data.Temparature, data.Humidity, data.Moisture, data.Nitrogen, data.Potassium, data.Phosphorous, data.Soil_Num, data.Crop_Num]])
+    features = [[data.Temparature, data.Humidity, data.Moisture, data.Nitrogen, data.Potassium, data.Phosphorous, data.Soil_Num, data.Crop_Num]]
     prediction = classifier.predict(features)
     return {"fertilizer": prediction[0]}
 
-# Run the FastAPI server
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
